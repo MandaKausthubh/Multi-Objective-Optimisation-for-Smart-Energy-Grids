@@ -1,2 +1,3 @@
 # Multi-Objective-Optimisation-for-Smart-Energy-Grids
-Implementation of Algorithm Switching (Bayesian Optimisation + Mesh Adaptive Direct Search) for Multi-objective Predictions in Renewable Energy Markets
+
+Implementation of Algorithm Switching (Bayesian Optimisation + Mesh Adaptive Direct Search) for Multi-objective Predictions in Renewable Energy Markets. The modification between this and the official repository for LION, is that we try to include the algorithm called SAASBO (Sparsed Axis Aligned Subspace Bayesian Optimisation). Although the algorithm was originally designed to perform Higher dimensional optimisations, we try to achieve and show convergence for smaller dimensional problem such as the Unit Commitment problem in Smart Energy Grids.
