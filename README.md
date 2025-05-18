@@ -1,6 +1,6 @@
 # Multi-Objective Optimisation for Smart Energy Grids
 
-This repository implements a hybrid optimization framework combining **Bayesian Optimization (BO)** and **Mesh Adaptive Direct Search (MADS)** to address multi-objective prediction tasks in renewable energy markets. The primary focus is on optimizing trade-offs between **model accuracy** and **sparsity** in neural network architectures, particularly within the context of smart energy grids.
+This repository implements a hybrid optimization framework combining **Bayesian Optimization (BO)** and **Mesh Adaptive Direct Search (MADS)** to address multi-objective prediction tasks in renewable energy markets. The primary focus is on optimizing trade-offs between **model accuracy** and **sparsity** in neural network architectures, particularly within the context of smart energy grids. Here we repeat the experiments from the paper: *Algorithm Switching for Multiobjective Predictions in Renewable Energy Markets*. (Implementation: https://scm.cms.hu-berlin.de/aswinkannan1987/lion)
 
 ## Overview
 
@@ -17,15 +17,15 @@ The project explores the application of **Sparse Axis-Aligned Subspace Bayesian 
 ## Repository Structure
 
 ```
-├── data/                   # Dataset files for training and evaluation
-├── models/                 # Neural network architectures and training scripts
-├── optimization/           # Optimization algorithms and related utilities
-│   ├── saasbo.py           # Implementation of SAASBO
-│   ├── mads.py             # Implementation of MADS
-│   └── hybrid_optimizer.py # Integration of BO and MADS
-├── utils/                  # Helper functions and utilities
-├── main.py                 # Entry point for running experiments
-├── requirements.txt        # Python dependencies
+├── data/                       
+├── utils/                    # Helper functions and utilities  
+│   ├── Aquisition.py           
+│   ├── Bayesian.py             
+│   └── GaussianProcesses.py    
+|   └-- Kernels.py
+├── ResNet-demo.py           # Entry point for running experiments
+|-- ResNet_model.py         # Original implementation from LION implementation
+├── MOML_Report.pdf        
 └── README.md               # Project overview and instructions
 ```
 
@@ -34,11 +34,6 @@ The project explores the application of **Sparse Axis-Aligned Subspace Bayesian 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Install the required packages:
-
-```bash
-pip install -r requirements.txt
-```
 
 ### Running Experiments
 
@@ -47,7 +42,7 @@ pip install -r requirements.txt
 3. Execute the main script:
 
 ```bash
-python main.py
+python ResNet-demo.py
 ```
 
 4. Results, including Pareto front visualizations, will be saved in the `results/` directory.
