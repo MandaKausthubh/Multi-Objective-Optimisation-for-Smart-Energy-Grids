@@ -36,6 +36,7 @@ class BayesianOptimization():
             print(f"Next point: {x_next}, Function value: {y_next}")
             print(f"Points so far: {self.X_init}, Function values so far: {self.y_init}")
             # Update the GP model with the new point
+            self.acquisition_function.InsertNewPoints(x_next, y_next)
             self.X_init = np.vstack((self.X_init, x_next))
             self.y_init = np.append(self.y_init, y_next)
             self.gp.fit(self.X_init, self.y_init)

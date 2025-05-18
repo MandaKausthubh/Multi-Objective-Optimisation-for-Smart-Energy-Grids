@@ -24,28 +24,34 @@ class RBFKernel(CovKernel):
         answer = np.zeros((x1.shape[0], x2.shape[0]))
         for i in range(x1.shape[0]):
             for j in range(x2.shape[0]):
-                answer[i, j] = np.exp(np.linalg.norm(x1[i] - x2[j]) ** 2 / (2 * self.length_scale ** 2))
+                answer[i, j] = np.exp(-(np.linalg.norm(x1[i] - x2[j]) ** 2) / (2 * self.length_scale ** 2))
         return answer
 
     def KernelSetVector(self, x1, v1):
         x1 = np.asarray(x1)
-        return np.exp(np.linalg.norm(x1 - v1, axis=1) ** 2 / (2 * self.length_scale ** 2))
+        return np.exp(-(np.linalg.norm(x1 - v1, axis=1) ** 2) / (2 * self.length_scale ** 2))
 
     def KernelVec2Vec(self, v1, v2):
         v1 = np.asarray(v1)
-        return np.exp(np.linalg.norm(v1 - v2) ** 2 / (2 * self.length_scale ** 2))
+        v2 = np.asarray(v2)
+        # print(f"KernelVec2Vec: {np.exp(-(np.linalg.norm(v1 - v2) ** 2) / (2 * self.length_scale ** 2))}")
+        return np.exp(-(np.linalg.norm(v1 - v2) ** 2) / (2 * self.length_scale ** 2))
 
     def __call__(self, x1, x2) -> np.ndarray:
         x1 = np.asarray(x1)
         x2 = np.asarray(x2)
-        print(f"Input dimensions: x1: {x1.ndim}, x2: {x2.ndim}")
+        # print(f"Input dimensions: x1: {x1.ndim}, x2: {x2.ndim}")
         if x1.ndim == 1 and x2.ndim == 1:
+            # print("Computing kernel for two vectors")
             return self.KernelVec2Vec(x1, x2)
         elif x1.ndim == 2 and x2.ndim == 2:
+            # print("Computing kernel for two sets")
             return self.Kernel2Sets(x1, x2)
         elif x1.ndim == 2 and x2.ndim == 1:
+            # print("Computing kernel for a set and a vector")
             return self.KernelSetVector(x1, x2)
         elif x1.ndim == 1 and x2.ndim == 2:
+            # print("Computing kernel for a vector and a set")
             return self.KernelSetVector(x2, x1)
         else:
             raise ValueError("Invalid input dimensions for kernel computation.")

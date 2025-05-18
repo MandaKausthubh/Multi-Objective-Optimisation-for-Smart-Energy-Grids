@@ -18,21 +18,28 @@ class GaussianProcess():
         self.y_train = y
 
     def predict(self, X):
-        print(f"Predicting for {X} points")
+        """
+        Predict the mean and covariance of the Gaussian process at the given points.
+        """
+        X = np.asarray(X)  # Query point
 
-        print("[Computing K]: ", end="")
         K = self.cov_kernel(self.X_train, self.X_train) + self.noise * np.eye(len(self.X_train))
-        print("[Computing K_s]: ", end="")
+        print(f"Covariance matrix K: {K.shape}")
+
         K_s = self.cov_kernel(self.X_train, X)
-        print("[Computing K_ss]: ", end="")
-        K_ss = self.cov_kernel(X, X) + self.noise
+        print(f"Covariance matrix K_s: {K_s.shape}")
 
-        print("K shape: ", K.shape)
-        print("K_s shape: ", K_s.shape)
-        print("K_ss shape: ", K_ss.shape)
+        K_ss = self.cov_kernel(X, X) + self.noise #+ 1e-8 * np.eye(len(X))
+        print(f"Covariance matrix K_ss: {K_ss.shape}")
 
-        mu = K_s.T @ np.linalg.inv(K) @ (self.y_train - self.mean_kernel(self.X_train)) + self.mean_kernel(np.array([1]))
-        sig = K_ss - K_s.T @ np.linalg.inv(K) @ K_s
+        inv_K = np.linalg.inv(K)
 
-        return mu, sig
+        mu_f_query =  K_s.T @ inv_K @ (self.y_train - self.mean_kernel(self.X_train)) + self.mean_kernel(np.array([1]))
+        print(f"Mean prediction mu_f_query: {mu_f_query.shape}")
+
+        cov_f_query = K_ss - K_s.T @ inv_K @ K_s
+        print(f"Covariance prediction cov_f_query: {cov_f_query.shape}")
+
+        return mu_f_query, cov_f_query
+
 

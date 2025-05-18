@@ -77,6 +77,7 @@ class ExpectedImprovement(AcquisitionFunction):
     def ExpectedImporvement(self, x):
         print(f"ExpectedImporvement: {x}")
         mu, sigma = self.gp.predict(x)
+        # sigma = np.sqrt(np.diag(cov))
         print(f"mu: {mu}, sigma: {sigma}")
         with np.errstate(divide='warn', invalid='ignore'):
             Z = (mu - self.y_best) / (sigma + 1e-9)
