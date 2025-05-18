@@ -201,7 +201,7 @@ def NN_prediction(x, testing_data, training_data, validation_data, training_time
     neurons_per_layer = np.round(x[1]).astype(int)
     x_dropout = x[2]
 
-    num_epochs = 15
+    num_epochs = 25
     learning_rate = 1e-2  
     
     training_time_list =[]

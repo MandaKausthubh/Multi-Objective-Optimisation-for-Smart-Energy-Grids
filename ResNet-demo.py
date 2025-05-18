@@ -1,10 +1,13 @@
 
 import warnings
+
+from botorch.generation.gen import OptimizationGradientError
 warnings.filterwarnings("ignore")
 
 import os
 import sys
 sys.path.append('../')
+
 
 import time
 import numpy as np 
@@ -16,6 +19,7 @@ from sklearn.model_selection import train_test_split
 
 import torch
 from torch.quasirandom import SobolEngine
+torch.set_default_dtype(torch.double)
 
 # BoTorch / GPyTorch / SAASBO
 from botorch.models import SaasFullyBayesianSingleTaskGP
@@ -115,7 +119,7 @@ def black_box_function(x, weights):
         sparsity = compute_model_density(model)
         acc = sklearn.metrics.accuracy_score(y_test, y_pred)
         objectives = torch.tensor([1.0 - acc, sparsity])  # minimize (1 - accuracy)
-        return torch.Tensor([acc, sparsity, (objectives @ weights).item()])  # Weighted sum of objectives
+        return (acc, sparsity, (objectives @ weights).item())  # Weighted sum of objectives
     except:
         print("Unexpected eval error", sys.exc_info()[0])
         return torch.tensor([1.0])  # Worst case if evaluation fails
@@ -139,11 +143,12 @@ weights = torch.tensor([
     [1.0, 0.0],
 ])  # Weights for objectives
 train_x = draw_sobol_samples(bounds=bounds, n=1, q=n_init).squeeze(0)
-train_y = torch.vstack([black_box_function(x, weights[0]).unsqueeze(0) for x in train_x])
+print(black_box_function(train_x[0], weights[0])[2])
+train_y = torch.Tensor([black_box_function(x, weights[0])[2] for x in train_x])
 # train_y = train_y[:, 2].unsqueeze(1)  # Only keep the objective value
 print(train_x.shape, train_y.shape)
 
-train_y_scalar = train_y[:, 2].unsqueeze(1)
+train_y_scalar = train_y.unsqueeze(1)  # Shape [n_init, 1]
 model = SaasFullyBayesianSingleTaskGP(train_x, train_y_scalar)
 
 n_iter = 10
@@ -161,32 +166,54 @@ for j in range(n_weights):
 
     # Fresh initialization for each run
     train_x = draw_sobol_samples(bounds=bounds, n=1, q=n_init).squeeze(0)
-    train_y = torch.vstack([black_box_function(x, weights[j])[-1].unsqueeze(0) for x in train_x])
+    train_y = torch.Tensor([black_box_function(x, weights[j])[-1] for x in train_x])
 
     # Fit initial model
-    model = SaasFullyBayesianSingleTaskGP(train_x, train_y)
+    train_y_scalar = train_y.unsqueeze(1)  # Shape [n_init, 1]
+    model = SaasFullyBayesianSingleTaskGP(train_x, train_y_scalar)
     fit_fully_bayesian_model_nuts(model)
 
     for i in range(n_iter):
         model.eval()
         acq_func = qUpperConfidenceBound(model=model, beta=0.1)
 
-        new_x, _ = optimize_acqf(
-            acq_function=acq_func,
-            bounds=bounds,
-            q=1,
-            num_restarts=10,
-            raw_samples=512,
-        )
+        print(f"Train_y stats: min={train_y.min().item():.4f}, max={train_y.max().item():.4f}")
+        print(f"Train_x stats: min={train_x.min().item():.4f}, max={train_x.max().item():.4f}")
+        print(f"Train_x stats: max={train_x.max().item():.4f}, min={train_x.min().item():.4f}")
 
-        acc, spar, new_y = black_box_function(new_x.squeeze(0), weights[j])
-        new_y = new_y.unsqueeze(0)  # Shape [1]
-        
-        train_x = torch.cat([train_x, new_x], dim=0)
-        train_y = torch.cat([train_y, new_y], dim=0)
+        try:
+            new_x, _ = optimize_acqf(
+                acq_function=acq_func,
+                bounds=bounds,
+                q=1,
+                num_restarts=10,
+                raw_samples=512,
+            )
 
-        model = SaasFullyBayesianSingleTaskGP(train_x, train_y)
-        fit_fully_bayesian_model_nuts(model)
+            acc, spar, new_y = black_box_function(new_x.squeeze(0), weights[j])
+            # new_y = new_y.unsqueeze(0)  # Shape [1]
+
+            # print(type(new_y), type(train_y))
+            new_y = torch.tensor([new_y], dtype=torch.float32, device=device)
+            train_x = torch.cat([train_x, new_x], dim=0)
+            train_y = torch.cat([train_y, new_y], dim=0)
+
+            bounds = bounds.to(dtype=torch.double)
+            train_x = train_x.to(dtype=torch.double)
+            train_y = train_y.to(dtype=torch.double)
+
+            train_y_scalar = train_y.unsqueeze(1)  # Shape [n_init + i + 1, 1]
+            model = SaasFullyBayesianSingleTaskGP(train_x, train_y_scalar)
+            fit_fully_bayesian_model_nuts(model)
+
+        except OptimizationGradientError:
+            print("Optimization failed due to gradient error.")
+            train_x = train_x + 1e-9 * torch.randn_like(train_x)
+            continue
+
+        except Exception as e:
+            print(f"Error during optimization: {e}")
+            continue
 
     # Evaluate best result for this weight
     best_idx = train_y.argmin()
@@ -206,7 +233,7 @@ for j in range(n_weights):
 import matplotlib.pyplot as plt
 plt.figure(figsize=(10, 5))
 # Plot accuracy vs sparsity
-plt.plot(sparse.numpy(), accuracy.numpy(), marker='o')
+plt.plot(all_sparse, all_accuracy, marker='o')
 plt.xlabel('Sparsity')
 plt.ylabel('Accuracy')
 plt.title('Accuracy vs Sparsity')
