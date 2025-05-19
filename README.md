@@ -7,7 +7,13 @@ This repository implements a hybrid optimization framework combining **Bayesian 
 The project explores the application of **Sparse Axis-Aligned Subspace Bayesian Optimization (SAASBO)**, originally designed for high-dimensional optimization problems, to lower-dimensional scenarios such as the Unit Commitment problem in smart energy grids. By integrating SAASBO with MADS, the framework aims to efficiently navigate the search space, balancing exploration and exploitation, to identify optimal configurations that satisfy multiple objectives.
 
 ## Pareto Front for Sparsity vs Accuracy:
-![Pareto Front](./Figure_1.png)
+![Pareto Front of (1-Accuracy) vs Time](./UpdatedParetoTimeAcc.jpeg)
+
+## Pareto Front for Sparsity vs Time:
+![Pareto Front of Sparsity vs Time](./sparsity_vs_time.png)
+
+## Pareto Front for Sparsity vs Accuracy:
+![Pareto Front of Spartsity vs (1-Accuracy)](./Figure_1.png)
 
 ## Features
 
